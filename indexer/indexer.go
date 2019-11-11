@@ -43,7 +43,7 @@ import (
 )
 
 var gotya  = regexp.MustCompile(`GOTYA ([^ ]+) (\{.*\}) !`)
-var haveu  = regexp.MustCompile(`HAVEU (\{.*\}) ?`)
+var haveu  = regexp.MustCompile(`HAVEU (\{.*\}) \?`)
 var report = regexp.MustCompile(`REPORT ([^ ]+) !`)
 
 type TableName string
@@ -60,7 +60,7 @@ func (sb *SearchBase) Initialize(connStr string) (err error) {
 	sb.DB, err = sql.Open("postgres", connStr)
 	if err==nil {
 		sb.Exec(`CREATE EXTENSION hstore`)
-		sb.Exec(`CREATE TABLE `+sb.Sql()+` (ipfsid text primary key, mtdt hstore)`)
+		sb.Exec(`CREATE TABLE `+sb.Sql()+` (ipfsid text primary key, mtdt hstore, isactive boolean default true)`)
 	}
 	return
 }
@@ -69,7 +69,7 @@ func (sb *SearchBase) Gotya(fid string,meta map[string]string) {
 	for k,v := range meta {
 		hs.Map[k] = sql.NullString{v,true}
 	}
-	sb.Exec(`INSERT INTO `+sb.Sql()+` (ipfsid,mtdt) VALUES ($1,$2::hstore)`,fid,hs)
+	sb.Exec(`INSERT INTO `+sb.Sql()+` (ipfsid,mtdt,isactive) VALUES ($1,$2::hstore,TRUE)`,fid,hs)
 }
 func (sb *SearchBase) Haveu(conn *irc.Conn,usr string,meta map[string]string) {
 	query := `SELECT ipfsid,hstore_to_json(mtdt) FROM `+sb.Sql()
